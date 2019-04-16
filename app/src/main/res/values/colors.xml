@@ -3,4 +3,26 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
+    <color name="cardBackground">#EEEEEE</color>
+    <color name="cardTag">#DCDCDC</color>
+    <color name="colorWhite">#ffffff</color>
+
+    <color name="textColor">#8A000000</color>
+    <color name="textColorBlack">#000000</color>
+    <color name="stoneTextColor">#000000</color>
+    <color name="colorLight">#aa8b8b8b</color>
+    <color name="error_color_material">#FF4081</color>
+
+    <color name="divider">#AFAFAF</color>
+    <color name="bg">#9E9E9E</color>
+
+    <color name="yellow">#FF9800</color>
+    <color name="yellow_light">#FFE014</color>
+    <color name="violet">#BF9DEC</color>
+    <color name="blue">#32A0D3</color>
+    <color name="blue_light">#65b8df</color>
+    <color name="orange">#F29765</color>
+    <color name="red">#E16F81</color>
+    <color name="green">#44B39F</color>
+    <color name="green_light">#88d6c8</color>
 </resources>

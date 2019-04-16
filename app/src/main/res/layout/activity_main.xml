@@ -1,18 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="@drawable/bg_main"
+    android:orientation="vertical">
 
-    <TextView
+    <ImageView
+        android:layout_width="367dp"
+        android:layout_height="155dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@drawable/maze_title2" />
+
+    <ImageView
+        android:id="@+id/play"
+        android:layout_width="283dp"
+        android:layout_height="163dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="15dp"
+        android:src="@drawable/play4" />
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_marginTop="40dp"
+        android:orientation="horizontal"
+        android:layout_gravity="center">
 
-</android.support.constraint.ConstraintLayout>
+        <ImageView
+            android:id="@+id/setting"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/setting3"
+            android:layout_marginRight="40dp"/>
+
+        <ImageView
+            android:id="@+id/rank"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/rank3"/>
+
+        <ImageView
+            android:id="@+id/sound"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/sound3"
+            android:layout_marginLeft="40dp"/>
+
+    </LinearLayout>
+
+
+
+</LinearLayout>
