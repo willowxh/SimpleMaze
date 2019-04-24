@@ -47,9 +47,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch(v.getId()){
             case R.id.play:
-                Toast.makeText(this, "tap paly", Toast.LENGTH_SHORT).show();
-                Intent intent_game = new Intent(MainActivity.this,GameActivity.class);
-                startActivity(intent_game);
+                //Toast.makeText(this, "tap paly", Toast.LENGTH_SHORT).show();
+                //Intent intent_game = new Intent(MainActivity.this,GameActivity.class);
+                //startActivity(intent_game);
+                Intent intent_menu = new Intent(MainActivity.this,MenuActivity.class);
+                startActivity(intent_menu);
                 break;
             case R.id.setting:
                 Toast.makeText(this, "tap setting", Toast.LENGTH_SHORT).show();
@@ -57,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.rank:
                 Intent intent_rank = new Intent(MainActivity.this,RankActivity.class);
                 startActivity(intent_rank);
-                Toast.makeText(this, "tap rank", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "tap rank", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.sound:
 //                Toast.makeText(this, "tap sound", Toast.LENGTH_SHORT).show();
