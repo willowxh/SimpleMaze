@@ -18,8 +18,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.PopupWindow;
+import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Stack;
 
@@ -48,6 +54,8 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
     private float[] positions;
     private int wallWidth, wallHeight,bitmapWidth,bitmapHeight;
     private PopupWindow popupWindow;
+    String json;
+    FileHelper fileHelper;
 
 
     public GameView(Context context, AttributeSet attrs) {
@@ -67,11 +75,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         pathPaint.setColor(Color.BLUE);
         pathPaint.setStrokeWidth(8);
         pathPaint.setStyle(Paint.Style.STROKE);
-
         bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         bitmapPaint.setFilterBitmap(true);
         bitmapPaint.setDither(true);
-
         bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.picature);
         portalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.portal4);
         wallBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.wall3);
@@ -79,15 +85,11 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         wallHeight = wallBitmap.getHeight();
         bitmapWidth = bitmap.getWidth();
         bitmapHeight = bitmap.getHeight();
-
         random = new Random();
         movePath = new Path();
-
-
         positions = new float[2];
-
+        fileHelper = new FileHelper(getContext());
         detector = new GestureDetector(getContext(),this);
-        createMaze();
     }
 
     private void removeWall(Cell current,Cell next){
@@ -139,7 +141,45 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         return null;
     }
 
-    private void createMaze(){
+    //从json文件读取迷宫
+    private void readMaze(String filename){
+        String jsonArray = "";
+        FileHelper fileHelper = new FileHelper(getContext());
+        try {
+            jsonArray = fileHelper.read(filename);
+            if(jsonArray.isEmpty()){
+                generateMaze();
+                jsonArray = fileHelper.read(filename);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), "数据读取失败", Toast.LENGTH_SHORT).show();
+        }
+        Gson gson = new Gson();
+        List<Cell> cells1 ;
+        cells1 =  gson.fromJson(jsonArray,new TypeToken<List<Cell>>(){}.getType());
+        System.out.println(cells1);
+        player = cells1.get(0);
+        exit = cells1.get(1);
+        cells1.remove(0);
+        cells1.remove(0);
+        cells = new Cell[COLS][ROWS];
+        for (Cell cell:cells1) {
+            cells[cell.col][cell.row] = cell;
+        }
+        movePath.reset();
+        invalidate();
+    }
+
+    //生成迷宫json文件
+    private void generateMaze(){
+        for(int i=0;i<40;i++){
+            String filename = "maze"+i+".json";
+            createMaze(filename);
+        }
+    }
+
+    private void createMaze(String filename){
         Stack<Cell> stack = new Stack<>();
         Cell current,next;
 
@@ -168,9 +208,24 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                 current = stack.pop();
             }
         }while(!stack.empty());
-
-        movePath.reset();
-        invalidate();
+        List<Cell> cells1 = new ArrayList<>();
+        cells1.add(player);
+        cells1.add(exit);
+        for (int x=0;x<COLS;x++){
+            for (int y=0;y<ROWS;y++){
+                cells1.add(cells[x][y]);
+            }
+        }
+        Gson gson = new Gson();
+        json = gson.toJson(cells1);
+        try {
+            fileHelper.save(filename,json);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), "数据写入失败", Toast.LENGTH_SHORT).show();
+        }
+        //movePath.reset();
+        //invalidate();
     }
 
     public void moveAnimation() {
@@ -309,7 +364,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
             @Override
             public void onClick(View v) {
                 popupWindow.dismiss();//无法点击其他区域
-                createMaze();
+                //createMaze();
             }
         });
         popupWindow = new PopupWindow(menuView,800, 400, true);
@@ -456,7 +511,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
     }
 
     private boolean checkFinish(){
-        if(player == exit){
+        if(player.row==exit.row&&player.col==exit.col){
             return true;
         }
         return false;
@@ -580,5 +635,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                 outLets += 1;
             return outLets;
         }
+    }
+
+    public void setLevel(int level) {
+        readMaze("maze"+level+".json");
     }
 }
