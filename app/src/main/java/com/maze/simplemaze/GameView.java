@@ -80,7 +80,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         bitmapPaint.setDither(true);
         bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.picature);
         portalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.portal4);
-        wallBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.wall3);
+        wallBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.wall);
         wallWidth = wallBitmap.getWidth();
         wallHeight = wallBitmap.getHeight();
         bitmapWidth = bitmap.getWidth();
@@ -147,13 +147,14 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         FileHelper fileHelper = new FileHelper(getContext());
         try {
             jsonArray = fileHelper.read(filename);
-            if(jsonArray.isEmpty()){
-                generateMaze();
-                jsonArray = fileHelper.read(filename);
-            }
         } catch (IOException e) {
             e.printStackTrace();
-            Toast.makeText(getContext(), "数据读取失败", Toast.LENGTH_SHORT).show();
+            generateMaze();
+            try {
+                jsonArray = fileHelper.read(filename);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
         }
         Gson gson = new Gson();
         List<Cell> cells1 ;
@@ -167,8 +168,8 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         for (Cell cell:cells1) {
             cells[cell.col][cell.row] = cell;
         }
-        movePath.reset();
-        invalidate();
+        //movePath.reset();
+        //invalidate();
     }
 
     //生成迷宫json文件
