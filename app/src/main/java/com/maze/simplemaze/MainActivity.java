@@ -33,12 +33,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         
         setting = (ImageView)findViewById(R.id.setting);
         rank = (ImageView)findViewById(R.id.rank);
-        sound = (ImageView)findViewById(R.id.sound);
+        //sound = (ImageView)findViewById(R.id.sound);
         play = (ImageView)findViewById(R.id.play);
         play.setOnClickListener(this);
         setting.setOnClickListener(this);
         rank.setOnClickListener(this);
-        sound.setOnClickListener(this);
+        //sound.setOnClickListener(this);
 
         playMusic();
     }
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent_rank);
                 //Toast.makeText(this, "tap rank", Toast.LENGTH_SHORT).show();
                 break;
-            case R.id.sound:
+            /*case R.id.sound:
 //                Toast.makeText(this, "tap sound", Toast.LENGTH_SHORT).show();
                 if (isPlayMusic){
                     if(mp != null)
@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     sound.setImageResource(R.drawable.sound3);
                     isPlayMusic = true;
                 }
-                break;
+                break;*/
         }
     }
 

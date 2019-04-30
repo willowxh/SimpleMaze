@@ -5,49 +5,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity"
-    android:background="@drawable/bg_main"
+    android:background="@drawable/menu"
     android:orientation="vertical">
 
     <ImageView
         android:layout_width="367dp"
         android:layout_height="155dp"
         android:layout_gravity="center_horizontal"
-        android:src="@drawable/maze_title2" />
+        android:src="@drawable/game_title" />
 
     <ImageView
         android:id="@+id/play"
         android:layout_width="283dp"
         android:layout_height="163dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="15dp"
-        android:src="@drawable/play4" />
+        android:layout_marginTop="100dp"
+        android:src="@drawable/play" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="200dp"
         android:orientation="horizontal"
         android:layout_gravity="center">
 
         <ImageView
             android:id="@+id/setting"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/setting3"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/setting"
             android:layout_marginRight="40dp"/>
 
         <ImageView
             android:id="@+id/rank"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:src="@drawable/rank3"/>
-
-        <ImageView
-            android:id="@+id/sound"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/sound3"
-            android:layout_marginLeft="40dp"/>
+            android:src="@drawable/rank"/>
 
     </LinearLayout>
 
