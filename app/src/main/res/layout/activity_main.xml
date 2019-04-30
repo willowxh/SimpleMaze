@@ -12,7 +12,7 @@
         android:layout_width="367dp"
         android:layout_height="155dp"
         android:layout_gravity="center_horizontal"
-        android:src="@drawable/game_title" />
+        android:src="@drawable/maze_title2" />
 
     <ImageView
         android:id="@+id/play"

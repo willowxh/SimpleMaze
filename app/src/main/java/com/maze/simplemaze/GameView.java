@@ -56,6 +56,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
     private PopupWindow popupWindow;
     String json;
     FileHelper fileHelper;
+    int level;
 
 
     public GameView(Context context, AttributeSet attrs) {
@@ -352,6 +353,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
             bottom = (player.row + 1) * cellSize - margin;
             destRect = new RectF(left,top,right,bottom);
             canvas.drawBitmap(bitmap, null,destRect, bitmapPaint);
+            if(checkFinish()){
+                showDialog();
+            }
         }
 
 //        canvas.drawPath(movePath,pathPaint);
@@ -365,7 +369,8 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
             @Override
             public void onClick(View v) {
                 popupWindow.dismiss();//无法点击其他区域
-                //createMaze();
+                readMaze("maze"+(++level)+".json");
+                invalidate();
             }
         });
         popupWindow = new PopupWindow(menuView,800, 400, true);
@@ -419,11 +424,6 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         }
         moveAnimation();
         isFinish = checkFinish();
-        if(isFinish){
-            showDialog();
-//            createMaze();
-//        return;
-        }
     }
 
     private void movePlayer(Direction direction){
@@ -437,8 +437,6 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                     moveAnimation();
                     isFinish = checkFinish();
                     if(isFinish){
-//                        createMaze();
-                        showDialog();
                         return;
                     }
 //                    invalidate();
@@ -459,7 +457,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                     moveAnimation();
                     isFinish = checkFinish();
                     if(isFinish){
-                        showDialog();
+                        //showDialog();
 //                        createMaze();
                         return;
                     }
@@ -477,7 +475,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                     moveAnimation();
                     isFinish = checkFinish();
                     if(isFinish){
-                        showDialog();
+                        //showDialog();
 //                        createMaze();
                         return;
                     }
@@ -495,7 +493,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                     moveAnimation();
                     isFinish = checkFinish();
                     if(isFinish){
-                        showDialog();
+                        //showDialog();
 //                        createMaze();
                         return;
                     }
@@ -639,6 +637,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
     }
 
     public void setLevel(int level) {
+        this.level = level;
         readMaze("maze"+level+".json");
     }
 }
