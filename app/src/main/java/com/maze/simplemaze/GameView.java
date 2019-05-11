@@ -1,13 +1,14 @@
 package com.maze.simplemaze;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PathMeasure;
+import android.graphics.Point;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
@@ -23,13 +24,15 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Stack;
 
-public class GameView extends View implements GestureDetector.OnGestureListener{
+public class GameView extends View implements GestureDetector.OnGestureListener, Runnable{
 
     private enum Direction{
         UP,DOWN,LEFT,RIGHT
@@ -39,26 +42,24 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
     private Cell player,exit;
     private static final int COLS=10,ROWS=14;
     private static final float WALL_THICKNESS = 4;
-    private float cellSize,hMargin,vMargin;
+    private int cellSize,hMargin,vMargin;
     private Paint wallPaint,playerPaint,exitPaint,pathPaint,bitmapPaint;
     private Bitmap bitmap,portalBitmap,wallBitmap;
     private Random random;
     Path movePath;
-    Boolean isFinish = false;
-    PathMeasure pathMeasure;
-    float left,top,right,bottom,exitLeft,exitTop,exitRight,exitBottom,wallLeft,wallTop,wallRight,wallBottom;
+    float exitLeft,exitTop,exitRight,exitBottom,wallLeft,wallTop,wallRight,wallBottom;
     RectF destRect,destRectExit,destRectWall;
-    private float pathLength; //动态计算
-    private double stepLength = 10;
-    private float distanceMoved = 0;
-    private float[] positions;
     private int wallWidth, wallHeight,bitmapWidth,bitmapHeight;
     private PopupWindow popupWindow;
     String json;
     FileHelper fileHelper;
     int level;
-
-
+    Point currentPosition = new Point();
+    int currentDirection = 1;
+    final int ANIM_COUNT=4,ANIM_DOWN=2,ANIM_LEFT=3,ANIM_RIGHT=1,ANIM_UP=0;
+    final Bitmap [][]playerBitmap = new Bitmap[ANIM_COUNT][ANIM_COUNT];//玩家移动动画数组
+    int currentState = 0;//当前行走状态
+    long speed = 100;  //行走速度
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -86,11 +87,13 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         wallHeight = wallBitmap.getHeight();
         bitmapWidth = bitmap.getWidth();
         bitmapHeight = bitmap.getHeight();
+        cellSize = 100;
         random = new Random();
         movePath = new Path();
-        positions = new float[2];
         fileHelper = new FileHelper(getContext());
         detector = new GestureDetector(getContext(),this);
+        destRect = new RectF();
+        clipBitmap();
     }
 
     private void removeWall(Cell current,Cell next){
@@ -144,8 +147,22 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
 
     //从json文件读取迷宫
     private void readMaze(String filename){
-        String jsonArray = "";
-        FileHelper fileHelper = new FileHelper(getContext());
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            //获取assets资源管理器
+            AssetManager assetManager = getResources().getAssets();
+            //通过管理器打开文件并读取
+            BufferedReader bf = new BufferedReader(new InputStreamReader(
+                    assetManager.open("maze/"+filename)));
+            String line;
+            while ((line = bf.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String jsonArray = stringBuilder.toString();
+        /*FileHelper fileHelper = new FileHelper(getContext());
         try {
             jsonArray = fileHelper.read(filename);
         } catch (IOException e) {
@@ -156,12 +173,13 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-        }
+        }*/
         Gson gson = new Gson();
         List<Cell> cells1 ;
         cells1 =  gson.fromJson(jsonArray,new TypeToken<List<Cell>>(){}.getType());
-        System.out.println(cells1);
         player = cells1.get(0);
+        currentPosition.x = player.col*cellSize;
+        currentPosition.y = player.row*cellSize;
         exit = cells1.get(1);
         cells1.remove(0);
         cells1.remove(0);
@@ -169,8 +187,6 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         for (Cell cell:cells1) {
             cells[cell.col][cell.row] = cell;
         }
-        //movePath.reset();
-        //invalidate();
     }
 
     //生成迷宫json文件
@@ -226,26 +242,14 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
             e.printStackTrace();
             Toast.makeText(getContext(), "数据写入失败", Toast.LENGTH_SHORT).show();
         }
-        //movePath.reset();
-        //invalidate();
     }
 
-    public void moveAnimation() {
-        distanceMoved = 0;
-        invalidate();
-    }
 
     @Override
     protected void onDraw(Canvas canvas) {
-//        canvas.drawColor(Color.GREEN);
-
         int width = getWidth();
         int height = getHeight();
 
-        if(width/height < COLS/ROWS)
-            cellSize = width/(COLS+1);
-        else
-            cellSize=height/(ROWS+1);
 
         hMargin = (width-COLS*cellSize)/2;
         vMargin = (height-ROWS*cellSize)/2;
@@ -264,12 +268,12 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                         destRectWall = new RectF(wallLeft, wallTop, wallRight, wallBottom);
                         canvas.drawBitmap(wallBitmap, null, destRectWall, bitmapPaint);
                     }
-//                    canvas.drawLine(
-//                            x*cellSize,
-//                            y*cellSize,
-//                            (x+1)*cellSize,
-//                            y*cellSize,
-//                            wallPaint);
+                    /*canvas.drawLine(
+                            x*cellSize,
+                            y*cellSize,
+                            (x+1)*cellSize,
+                            y*cellSize,
+                            wallPaint);*/
                 }
                 if(cells[x][y].leftWall) {
 
@@ -281,12 +285,12 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                         destRectWall = new RectF(wallLeft, wallTop, wallRight, wallBottom);
                         canvas.drawBitmap(wallBitmap, null, destRectWall, bitmapPaint);
                     }
-//                    canvas.drawLine(
-//                            x*cellSize,
-//                            y*cellSize,
-//                            x*cellSize,
-//                            (y+1)*cellSize,
-//                            wallPaint);
+                    /*canvas.drawLine(
+                            x*cellSize,
+                            y*cellSize,
+                            x*cellSize,
+                            (y+1)*cellSize,
+                            wallPaint);*/
                 }
                 if(cells[x][y].bottomWall) {
 
@@ -298,12 +302,12 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                         destRectWall = new RectF(wallLeft, wallTop, wallRight, wallBottom);
                         canvas.drawBitmap(wallBitmap, null, destRectWall, bitmapPaint);
                     }
-//                    canvas.drawLine(
-//                            x*cellSize,
-//                            (y+1)*cellSize,
-//                            (x+1)*cellSize,
-//                            (y+1)*cellSize,
-//                            wallPaint);
+                    /*canvas.drawLine(
+                            x*cellSize,
+                            (y+1)*cellSize,
+                            (x+1)*cellSize,
+                            (y+1)*cellSize,
+                            wallPaint);*/
                 }
                 if(cells[x][y].rightWall) {
 
@@ -315,12 +319,12 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
                         destRectWall = new RectF(wallLeft, wallTop, wallRight, wallBottom);
                         canvas.drawBitmap(wallBitmap, null, destRectWall, bitmapPaint);
                     }
-//                    canvas.drawLine(
-//                            (x+1)*cellSize,
-//                            y*cellSize,
-//                            (x+1)*cellSize,
-//                            (y+1)*cellSize,
-//                            wallPaint);
+                    /*canvas.drawLine(
+                            (x+1)*cellSize,
+                            y*cellSize,
+                            (x+1)*cellSize,
+                            (y+1)*cellSize,
+                            wallPaint);*/
 
                 }
             }
@@ -334,31 +338,15 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         exitBottom = (exit.row+1)*cellSize-margin;
         destRectExit = new RectF(exitLeft,exitTop,exitRight,exitBottom);
         canvas.drawBitmap(portalBitmap,null,destRectExit,bitmapPaint);
-
-        pathMeasure = new PathMeasure(movePath,false);
-        pathLength = pathMeasure.getLength();
-        if (distanceMoved < pathLength) {
-            pathMeasure.getPosTan(distanceMoved , positions, null);
-            destRect.left = positions[0]-0.5f*cellSize; //0.5f*cellSize
-            destRect.top = positions[1]-0.5f*cellSize+2*margin;
-            destRect.right = positions[0]+0.5f*cellSize-2*margin;
-            destRect.bottom = positions[1]+0.5f*cellSize;
-            canvas.drawBitmap(bitmap, null,destRect, bitmapPaint);
-            distanceMoved  += stepLength;
-            invalidate();
-        } else {
-            left = player.col * cellSize + margin;
-            top = player.row * cellSize + margin;
-            right = (player.col + 1) * cellSize - margin;
-            bottom = (player.row + 1) * cellSize - margin;
-            destRect = new RectF(left,top,right,bottom);
-            canvas.drawBitmap(bitmap, null,destRect, bitmapPaint);
-            if(checkFinish()){
-                showDialog();
-            }
+        destRect.top = currentPosition.y;
+        destRect.bottom = currentPosition.y+cellSize;
+        destRect.left = currentPosition.x;
+        destRect.right = currentPosition.x+cellSize;
+        canvas.drawBitmap(playerBitmap[currentDirection][currentState], null,destRect, bitmapPaint);
+        if(checkFinish()){
+            System.out.println("test");
+            showDialog();
         }
-
-//        canvas.drawPath(movePath,pathPaint);
     }
 
     private void showDialog(){
@@ -385,127 +373,145 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
         popupWindow.showAtLocation(menuView, Gravity.CENTER,0,0);//设置popupwindow的窗口位置
     }
 
-    private void autoWalk(int preDirection){
-        int previousDirection = preDirection;
-        while(player.getOutlets() == 2){
-            if(!player.topWall && previousDirection != 2){
-                player = cells[player.col][player.row-1];
-                movePath.rLineTo(0,-cellSize);
-                isFinish = checkFinish();
-                if(isFinish)
-                    break;
-//                invalidate();
-                previousDirection = 0;
-            } else if(!player.leftWall && previousDirection != 1){
-                player = cells[player.col-1][player.row];
-                movePath.rLineTo(-cellSize,0);
-                isFinish = checkFinish();
-                if(isFinish)
-                    break;
-//                invalidate();
-                previousDirection = 3;
-            }else if(!player.bottomWall && previousDirection != 0){
-                player = cells[player.col][player.row+1];
-                movePath.rLineTo(0,cellSize);
-                isFinish = checkFinish();
-                if(isFinish)
-                    break;
-//                invalidate();
-                previousDirection = 2;
-            }else if(!player.rightWall && previousDirection != 3){
-                player = cells[player.col+1][player.row];
-                movePath.rLineTo(cellSize,0);
-                isFinish = checkFinish();
-                if(isFinish)
-                    break;
-//                invalidate();
-                previousDirection = 1;
+    //切割行走动画，并存到动画数组
+    public void clipBitmap(){
+        Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.player);
+        int tileWidth = temp.getWidth() / ANIM_COUNT;
+        int tileHeight = temp.getHeight() / ANIM_COUNT;
+        int i = 0,x = 0,y = 0;
+        for(i =0; i < ANIM_COUNT; i++) {
+            y = 0;
+            playerBitmap[ANIM_DOWN][i] = Bitmap.createBitmap(temp, x, y, tileWidth, tileHeight);
+            y += tileHeight;
+            playerBitmap[ANIM_LEFT][i] = Bitmap.createBitmap(temp, x, y, tileWidth, tileHeight);
+            y += tileHeight;
+            playerBitmap[ANIM_RIGHT][i] = Bitmap.createBitmap(temp, x, y, tileWidth, tileHeight);
+            y += tileHeight;
+            playerBitmap[ANIM_UP][i] = Bitmap.createBitmap(temp, x, y, tileWidth, tileHeight);
+            x += tileWidth;
+        }
+    }
+
+    //自动行走线程
+    public void run(){
+        int i = 0;
+        if(currentDirection == 1) {
+            while (!player.rightWall) {
+                currentPosition.x += 10;
+                currentState = (currentState + 1) % 4;
+                if (i == 9) {
+                    player = cells[player.col + 1][player.row];
+                    if(checkFinish()){
+                        break;
+                    }
+                    if(player.getOutlets()<2) break;
+                }
+                i = (i + 1) % 10;
+                invalidate();
+                try {
+                    Thread.sleep(speed);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }else
+        if(currentDirection == 2) {
+            while (!player.bottomWall) {
+                currentPosition.y += 10;
+                currentState = (currentState + 1) % 4;
+                if (i == 9) {
+                    player = cells[player.col][player.row+1];
+                    if(checkFinish()){
+                        break;
+                    }
+                    if(player.getOutlets()<2) break;
+                }
+                i = (i + 1) % 10;
+                invalidate();
+                try {
+                    Thread.sleep(speed);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }else
+        if(currentDirection == 3) {
+            while (!player.leftWall) {
+                currentPosition.x -= 10;
+                currentState = (currentState + 1) % 4;
+                if (i == 9) {
+                    player = cells[player.col - 1][player.row];
+                    if(checkFinish()){
+                        break;
+                    }
+                    if(player.getOutlets()<2) break;
+                }
+                i = (i + 1) % 10;
+                invalidate();
+                try {
+                    Thread.sleep(speed);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }else
+        if(currentDirection == 0) {
+            while (!player.topWall) {
+                currentPosition.y -= 10;
+                currentState = (currentState + 1) % 4;
+                if (i == 9) {
+                    player = cells[player.col][player.row-1];
+                    if(checkFinish()){
+                        break;
+                    }
+                    if(player.getOutlets()<2) break;
+                }
+                i = (i + 1) % 10;
+                invalidate();
+                try {
+                    Thread.sleep(speed);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
-        moveAnimation();
-        isFinish = checkFinish();
+        invalidate();
     }
 
     private void movePlayer(Direction direction){
         switch (direction){
             case UP:
-                movePath.reset();
-                movePath.moveTo(player.col*cellSize+hMargin+0.1f*cellSize,player.row*cellSize+vMargin-0.1f*cellSize);
                 if(!player.topWall){
-                    player = cells[player.col][player.row-1];
-                    movePath.rLineTo(0,-cellSize);
-                    moveAnimation();
-                    isFinish = checkFinish();
-                    if(isFinish){
-                        return;
-                    }
-//                    invalidate();
-                    // 0 -> top
-                    // 1 -> right
-                    // 2 -> bottom
-                    // 3 -> left
-                    if(!isFinish)
-                        autoWalk(0);
+                    currentDirection = 0;
+                    invalidate();
+                    Thread thread = new Thread(this);
+                    thread.start();
                 }
                 break;
             case DOWN:
-                movePath.reset();
-                movePath.moveTo(player.col*cellSize+hMargin+0.1f*cellSize,player.row*cellSize+vMargin-0.1f*cellSize);
                 if(!player.bottomWall){
-                    player = cells[player.col][player.row+1];
-                    movePath.rLineTo(0,cellSize);
-                    moveAnimation();
-                    isFinish = checkFinish();
-                    if(isFinish){
-                        //showDialog();
-//                        createMaze();
-                        return;
-                    }
-//                    invalidate();
-                    if(!isFinish)
-                        autoWalk(2);
+                    currentDirection = 2;
+                    invalidate();
+                    Thread thread = new Thread(this);
+                    thread.start();
                 }
                 break;
             case LEFT:
-                movePath.reset();
-                movePath.moveTo(player.col*cellSize+hMargin+0.1f*cellSize,player.row*cellSize+vMargin-0.1f*cellSize);
                 if(!player.leftWall){
-                    player = cells[player.col-1][player.row];
-                    movePath.rLineTo(-cellSize,0);
-                    moveAnimation();
-                    isFinish = checkFinish();
-                    if(isFinish){
-                        //showDialog();
-//                        createMaze();
-                        return;
-                    }
-//                    invalidate();
-                    if(!isFinish)
-                        autoWalk(3);
+                    currentDirection = 3;
+                    invalidate();
+                    Thread thread = new Thread(this);
+                    thread.start();
                 }
                 break;
             case RIGHT:
-                movePath.reset();
-                movePath.moveTo(player.col*cellSize+hMargin+0.1f*cellSize,player.row*cellSize+vMargin-0.1f*cellSize);
                 if(!player.rightWall){
-                    player = cells[player.col+1][player.row];
-                    movePath.rLineTo(cellSize,0);
-                    moveAnimation();
-                    isFinish = checkFinish();
-                    if(isFinish){
-                        //showDialog();
-//                        createMaze();
-                        return;
-                    }
-//                    invalidate();
-                    if(!isFinish)
-                        autoWalk(1);
+                    currentDirection = 1;
+                    invalidate();
+                    Thread thread = new Thread(this);
+                    thread.start();
                 }
                 break;
-
-                default:
-//                    checkFinish();
-//                    invalidate();
         }
     }
 
@@ -518,44 +524,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener{
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-//        if(event.getAction() == MotionEvent.ACTION_DOWN)
-//            return true;
-//        if(event.getAction() == MotionEvent.ACTION_MOVE){
-//            float x = event.getX();
-//            float y = event.getY();
-//
-//            float playerCenterX = hMargin + (player.col+0.5f)*cellSize;
-//            float playerCenterY = vMargin + (player.row+0.5f)*cellSize;
-//
-//            float dx = x- playerCenterX;
-//            float dy = y -playerCenterY;
-//
-//            float absDx = Math.abs(dx);
-//            float absDy = Math.abs(dy);
-//
-//            if(absDx > cellSize || absDy >cellSize){
-//                if(absDx > absDy){
-//                    // move in x_direction
-//                    if(dx > 0)
-//                        // move to the right
-//                        movePlayer(Direction.RIGHT);
-//                    else
-//                        //move to the left
-//                        movePlayer(Direction.LEFT);
-//                }else{
-//                    // move in y_direction
-//                    if(dy > 0)
-//                        //move down
-//                        movePlayer(Direction.DOWN);
-//                    else
-//                        // move up
-//                        movePlayer(Direction.UP);
-//                }
-//            }
-//            return true;
-//        }
         detector.onTouchEvent(event);
-//        return detector.onTouchEvent(event);
         return true;
     }
 
