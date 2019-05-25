@@ -22,7 +22,7 @@
     <color name="blue">#32A0D3</color>
     <color name="blue_light">#65b8df</color>
     <color name="orange">#F29765</color>
-    <color name="red">#E16F81</color>
+    <color name="red">#F2E16F81</color>
     <color name="green">#44B39F</color>
     <color name="green_light">#88d6c8</color>
 </resources>

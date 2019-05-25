@@ -46,7 +46,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     private static final int COLS=10,ROWS=14;
     private static final float WALL_THICKNESS = 4;
     private int cellSize,hMargin,vMargin;
-    private Paint wallPaint,playerPaint,exitPaint,pathPaint,bitmapPaint;
+    private Paint wallPaint,playerPaint,exitPaint,pathPaint,bitmapPaint,icePaint;
     private Bitmap bitmap,portalBitmap,wallBitmap;
     private Random random;
     Path movePath;
@@ -90,9 +90,13 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         pathPaint.setColor(Color.BLUE);
         pathPaint.setStrokeWidth(8);
         pathPaint.setStyle(Paint.Style.STROKE);
+
         bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         bitmapPaint.setFilterBitmap(true);
         bitmapPaint.setDither(true);
+
+        icePaint = new Paint();
+        icePaint.setColor(Color.WHITE);
         bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.picature);
         portalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.portal4);
         wallBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.wall);
@@ -108,6 +112,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         destRect = new RectF();
         moveThread = new Thread(this);
         clipBitmap();
+        readMaze("maze"+level+".json");
     }
 
     private void removeWall(Cell current,Cell next){
@@ -191,10 +196,10 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         Gson gson = new Gson();
         List<Cell> cells1 ;
         cells1 =  gson.fromJson(jsonArray,new TypeToken<List<Cell>>(){}.getType());
-        player = cells1.get(0);
+        player = cells1.get(0);//人物对象保存在 0 位置
         currentPosition.x = player.col*cellSize;
         currentPosition.y = player.row*cellSize;
-        exit = cells1.get(1);
+        exit = cells1.get(1);//出口保存在 1 位置
         cells1.remove(0);
         cells1.remove(0);
         cells = new Cell[COLS][ROWS];
@@ -219,6 +224,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         for (int x=0;x<COLS;x++){
             for (int y=0;y<ROWS;y++){
                 cells[x][y] = new Cell(x,y);
+                if(COLS==6){
+                    cells[x][y].isIce = true;
+                }
             }
         }
         int col1 = random.nextInt(COLS);
@@ -240,6 +248,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                 current = stack.pop();
             }
         }while(!stack.empty());
+        //将cell对象数组保存
         List<Cell> cells1 = new ArrayList<>();
         cells1.add(player);
         cells1.add(exit);
@@ -269,6 +278,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         vMargin = (height-ROWS*cellSize)/2;
 
         canvas.translate(hMargin,vMargin);
+        float margin = cellSize /10;
 
         //画出墙体
         float factor = 0.11f;
@@ -343,10 +353,16 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                             wallPaint);*/
 
                 }
+                Log.d("iceState",cells[x][y].isIce+"");
+                if(cells[x][y].isIce){
+                    canvas.drawRect(cells[x][y].col*cellSize+margin,
+                            cells[x][y].row*cellSize+margin,
+                            (cells[x][y].col+1)*cellSize-margin,
+                            (cells[x][y].row+1)*cellSize-margin,
+                            icePaint);
+                }
             }
         }
-
-        float margin = cellSize /10;
 
         //画出出口
         exitLeft = exit.col*cellSize+margin;
@@ -355,11 +371,13 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         exitBottom = (exit.row+1)*cellSize-margin;
         destRectExit = new RectF(exitLeft,exitTop,exitRight,exitBottom);
         canvas.drawBitmap(portalBitmap,null,destRectExit,bitmapPaint);
+        //画出人物
         destRect.top = currentPosition.y;
         destRect.bottom = currentPosition.y+cellSize;
         destRect.left = currentPosition.x;
         destRect.right = currentPosition.x+cellSize;
         canvas.drawBitmap(playerBitmap[currentDirection][currentState], null,destRect, bitmapPaint);
+        //到达终点则显示弹窗,且完成绘图后，才弹出
         if(checkFinish()){
             System.out.println("test");
             showDialog();
@@ -426,7 +444,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(checkFinish()){
                         break;
                     }
-                    if(player.getOutlets()<2) break;
+                    if(player.getOutlets()>2) break;
                 }
                 i = (i + 1) % 10;
 //                invalidate();
@@ -447,7 +465,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(checkFinish()){
                         break;
                     }
-                    if(player.getOutlets()<2) break;
+                    if(player.getOutlets()>2) break;
                 }
                 i = (i + 1) % 10;
 //                invalidate();
@@ -468,7 +486,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(checkFinish()){
                         break;
                     }
-                    if(player.getOutlets()<2) break;
+                    if(player.getOutlets()>2) break;
                 }
                 i = (i + 1) % 10;
 //                invalidate();
@@ -489,7 +507,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(checkFinish()){
                         break;
                     }
-                    if(player.getOutlets()<2) break;
+                    if(player.getOutlets()>2) break;
                 }
                 i = (i + 1) % 10;
 //                invalidate();
@@ -619,6 +637,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         boolean bottomWall = true;
         boolean rightWall = true;
         boolean visited = false;
+        boolean isIce = false;
         int col,row;
 
         public Cell(int col,int row){
@@ -628,13 +647,13 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
 
         public int getOutlets(){
             int outLets = 0;
-            if(topWall)
+            if(!topWall)
                 outLets += 1;
-            if(leftWall)
+            if(!leftWall)
                 outLets += 1;
-            if(bottomWall)
+            if(!bottomWall)
                 outLets += 1;
-            if(rightWall)
+            if(!rightWall)
                 outLets += 1;
             return outLets;
         }
@@ -642,6 +661,5 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
 
     public void setLevel(int level) {
         this.level = level;
-        readMaze("maze"+level+".json");
     }
 }
