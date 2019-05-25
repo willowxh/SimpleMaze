@@ -10,7 +10,10 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.RectF;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -59,7 +62,17 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     final int ANIM_COUNT=4,ANIM_DOWN=2,ANIM_LEFT=3,ANIM_RIGHT=1,ANIM_UP=0;
     final Bitmap [][]playerBitmap = new Bitmap[ANIM_COUNT][ANIM_COUNT];//玩家移动动画数组
     int currentState = 0;//当前行走状态
-    long speed = 100;  //行走速度
+    long speed = 10;  //行走速度
+    Thread moveThread = null;
+
+    Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            if(msg.what == 77){
+                invalidate();
+            }
+        }
+    };
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -93,6 +106,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         fileHelper = new FileHelper(getContext());
         detector = new GestureDetector(getContext(),this);
         destRect = new RectF();
+        moveThread = new Thread(this);
         clipBitmap();
     }
 
@@ -255,6 +269,8 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         vMargin = (height-ROWS*cellSize)/2;
 
         canvas.translate(hMargin,vMargin);
+
+        //画出墙体
         float factor = 0.11f;
         for (int x=0;x<COLS;x++){
             for (int y=0;y<ROWS;y++){
@@ -332,6 +348,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
 
         float margin = cellSize /10;
 
+        //画出出口
         exitLeft = exit.col*cellSize+margin;
         exitTop = exit.row*cellSize+margin;
         exitRight = (exit.col+1)*cellSize-margin;
@@ -356,12 +373,17 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         nextButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                popupWindow.dismiss();//无法点击其他区域
+                if(popupWindow != null) {
+                    popupWindow.dismiss();//无法点击其他区域
+                    popupWindow = null;
+                }
                 readMaze("maze"+(++level)+".json");
                 invalidate();
             }
         });
-        popupWindow = new PopupWindow(menuView,800, 400, true);
+        if(popupWindow == null) {
+            popupWindow = new PopupWindow(menuView, 800, 400, true);
+        }
 //        popupWindow.setAnimationStyle(R.style.popwin_anim_style);
         popupWindow.setFocusable(false);
         popupWindow.setTouchInterceptor(new OnTouchListener() {
@@ -407,7 +429,8 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(player.getOutlets()<2) break;
                 }
                 i = (i + 1) % 10;
-                invalidate();
+//                invalidate();
+                handler.sendEmptyMessage(77);
                 try {
                     Thread.sleep(speed);
                 } catch (InterruptedException e) {
@@ -427,7 +450,8 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(player.getOutlets()<2) break;
                 }
                 i = (i + 1) % 10;
-                invalidate();
+//                invalidate();
+                handler.sendEmptyMessage(77);
                 try {
                     Thread.sleep(speed);
                 } catch (InterruptedException e) {
@@ -447,7 +471,8 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(player.getOutlets()<2) break;
                 }
                 i = (i + 1) % 10;
-                invalidate();
+//                invalidate();
+                handler.sendEmptyMessage(77);
                 try {
                     Thread.sleep(speed);
                 } catch (InterruptedException e) {
@@ -467,7 +492,8 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(player.getOutlets()<2) break;
                 }
                 i = (i + 1) % 10;
-                invalidate();
+//                invalidate();
+                handler.sendEmptyMessage(77);
                 try {
                     Thread.sleep(speed);
                 } catch (InterruptedException e) {
@@ -475,41 +501,50 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                 }
             }
         }
-        invalidate();
+//        invalidate();
+        handler.sendEmptyMessage(77);
     }
 
     private void movePlayer(Direction direction){
         switch (direction){
             case UP:
-                if(!player.topWall){
+                if(!player.topWall && !moveThread.isAlive()){
                     currentDirection = 0;
-                    invalidate();
-                    Thread thread = new Thread(this);
-                    thread.start();
+//                    invalidate();
+//                    Thread thread = new Thread(this);
+//                    thread.start();
+                    handler.sendEmptyMessage(77);
+                    moveThread.start();
                 }
                 break;
             case DOWN:
-                if(!player.bottomWall){
+                if(!player.bottomWall && !moveThread.isAlive()){
                     currentDirection = 2;
-                    invalidate();
-                    Thread thread = new Thread(this);
-                    thread.start();
+//                    invalidate();
+//                    Thread thread = new Thread(this);
+//                    thread.start();
+                    handler.sendEmptyMessage(77);
+                    moveThread.start();
                 }
                 break;
             case LEFT:
-                if(!player.leftWall){
+                if(!player.leftWall && !moveThread.isAlive()){
                     currentDirection = 3;
-                    invalidate();
-                    Thread thread = new Thread(this);
-                    thread.start();
+//                    invalidate();
+//                    Thread thread = new Thread(this);
+//                    thread.start();
+                    handler.sendEmptyMessage(77);
+                    moveThread.start();
                 }
                 break;
             case RIGHT:
-                if(!player.rightWall){
+                if(!player.rightWall && !moveThread.isAlive()){
                     currentDirection = 1;
-                    invalidate();
-                    Thread thread = new Thread(this);
-                    thread.start();
+//                    invalidate();
+//                    Thread thread = new Thread(this);
+//                    thread.start();
+                    handler.sendEmptyMessage(77);
+                    moveThread.start();
                 }
                 break;
         }
