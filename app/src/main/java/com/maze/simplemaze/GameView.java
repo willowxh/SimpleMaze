@@ -13,7 +13,6 @@ import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -63,7 +62,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     final Bitmap [][]playerBitmap = new Bitmap[ANIM_COUNT][ANIM_COUNT];//玩家移动动画数组
     int currentState = 0;//当前行走状态
     long speed = 10;  //行走速度
-    Thread moveThread = null;
+    //Thread moveThread = null;
 
     Handler handler = new Handler(){
         @Override
@@ -110,9 +109,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         fileHelper = new FileHelper(getContext());
         detector = new GestureDetector(getContext(),this);
         destRect = new RectF();
-        moveThread = new Thread(this);
+        //moveThread = new Thread(this);
         clipBitmap();
-        readMaze("maze"+level+".json");
+//        readMaze("maze"+level+".json");
     }
 
     private void removeWall(Cell current,Cell next){
@@ -165,7 +164,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     }
 
     //从json文件读取迷宫
-    private void readMaze(String filename){
+    public void readMaze(String filename){
         StringBuilder stringBuilder = new StringBuilder();
         try {
             //获取assets资源管理器
@@ -206,6 +205,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         for (Cell cell:cells1) {
             cells[cell.col][cell.row] = cell;
         }
+        System.out.println(level);
     }
 
     //生成迷宫json文件
@@ -274,6 +274,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         int height = getHeight();
 
 
+        //System.out.println(level);
         hMargin = (width-COLS*cellSize)/2;
         vMargin = (height-ROWS*cellSize)/2;
 
@@ -353,7 +354,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                             wallPaint);*/
 
                 }
-                Log.d("iceState",cells[x][y].isIce+"");
+                //Log.d("iceState",cells[x][y].isIce+"");
                 if(cells[x][y].isIce){
                     canvas.drawRect(cells[x][y].col*cellSize+margin,
                             cells[x][y].row*cellSize+margin,
@@ -379,7 +380,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         canvas.drawBitmap(playerBitmap[currentDirection][currentState], null,destRect, bitmapPaint);
         //到达终点则显示弹窗,且完成绘图后，才弹出
         if(checkFinish()){
-            System.out.println("test");
+            //System.out.println("test");
             showDialog();
         }
     }
@@ -526,43 +527,47 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     private void movePlayer(Direction direction){
         switch (direction){
             case UP:
-                if(!player.topWall && !moveThread.isAlive()){
+                if(!player.topWall){
                     currentDirection = 0;
 //                    invalidate();
-//                    Thread thread = new Thread(this);
-//                    thread.start();
                     handler.sendEmptyMessage(77);
-                    moveThread.start();
+                    Thread thread = new Thread(this);
+                    thread.start();
+//                    handler.sendEmptyMessage(77);
+//                    moveThread.start();
                 }
                 break;
             case DOWN:
-                if(!player.bottomWall && !moveThread.isAlive()){
+                if(!player.bottomWall){
                     currentDirection = 2;
 //                    invalidate();
-//                    Thread thread = new Thread(this);
-//                    thread.start();
                     handler.sendEmptyMessage(77);
-                    moveThread.start();
+                    Thread thread = new Thread(this);
+                    thread.start();
+//                    handler.sendEmptyMessage(77);
+//                    moveThread.start();
                 }
                 break;
             case LEFT:
-                if(!player.leftWall && !moveThread.isAlive()){
+                if(!player.leftWall){
                     currentDirection = 3;
 //                    invalidate();
-//                    Thread thread = new Thread(this);
-//                    thread.start();
                     handler.sendEmptyMessage(77);
-                    moveThread.start();
+                    Thread thread = new Thread(this);
+                    thread.start();
+//                    handler.sendEmptyMessage(77);
+//                    moveThread.start();
                 }
                 break;
             case RIGHT:
-                if(!player.rightWall && !moveThread.isAlive()){
+                if(!player.rightWall){
                     currentDirection = 1;
 //                    invalidate();
-//                    Thread thread = new Thread(this);
-//                    thread.start();
                     handler.sendEmptyMessage(77);
-                    moveThread.start();
+                    Thread thread = new Thread(this);
+                    thread.start();
+//                    handler.sendEmptyMessage(77);
+//                    moveThread.start();
                 }
                 break;
         }
@@ -657,9 +662,5 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                 outLets += 1;
             return outLets;
         }
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
     }
 }

@@ -18,6 +18,6 @@ public class GameActivity extends AppCompatActivity {
         Intent intent = getIntent();
         int level = intent.getIntExtra("level",1);
         GameView gameView = findViewById(R.id.game_view);
-        gameView.setLevel(level);
+        gameView.readMaze("maze"+level+".json");
     }
 }
