@@ -41,7 +41,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     }
     GestureDetector detector;
     private Cell[][] cells;
-    private Cell player,exit;
+    private Cell player,exit,monster;
     private static final int COLS=10,ROWS=14;
     private static final float WALL_THICKNESS = 4;
     private int cellSize,hMargin,vMargin;
@@ -50,18 +50,25 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     private Random random;
     Path movePath;
     float exitLeft,exitTop,exitRight,exitBottom,wallLeft,wallTop,wallRight,wallBottom;
-    RectF destRect,destRectExit,destRectWall;
+    RectF destRect,destRectExit,destRectWall,destRectMonster;
     private int wallWidth, wallHeight,bitmapWidth,bitmapHeight;
     private PopupWindow popupWindow;
     String json;
     FileHelper fileHelper;
     int level;
     Point currentPosition = new Point();
+    Point monsterPosition = new Point();
     int currentDirection = 1;
+    int monsterDirection = 1;
     final int ANIM_COUNT=4,ANIM_DOWN=2,ANIM_LEFT=3,ANIM_RIGHT=1,ANIM_UP=0;
     final Bitmap [][]playerBitmap = new Bitmap[ANIM_COUNT][ANIM_COUNT];//玩家移动动画数组
+    final Bitmap[] monsterBitmap = new Bitmap[4];
+    int monsterState = 2;//怪物状态
     int currentState = 0;//当前行走状态
     long speed = 10;  //行走速度
+    int mode = 0; //关卡模式：0=>经典 1=>怪物 2=>冰块
+    Thread monsterThread;
+    boolean isFailed = false;
     //Thread moveThread = null;
 
     Handler handler = new Handler(){
@@ -99,6 +106,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.picature);
         portalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.portal4);
         wallBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.wall);
+
         wallWidth = wallBitmap.getWidth();
         wallHeight = wallBitmap.getHeight();
         bitmapWidth = bitmap.getWidth();
@@ -111,7 +119,11 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         destRect = new RectF();
         //moveThread = new Thread(this);
         clipBitmap();
-//        readMaze("maze"+level+".json");
+        monsterBitmap[0] = BitmapFactory.decodeResource(getResources(),R.drawable.manster1);
+        monsterBitmap[1] = BitmapFactory.decodeResource(getResources(),R.drawable.manster2);
+        monsterBitmap[2] = BitmapFactory.decodeResource(getResources(),R.drawable.manster3);
+        monsterBitmap[3] = BitmapFactory.decodeResource(getResources(),R.drawable.manster4);
+        //        readMaze("maze"+level+".json");
     }
 
     private void removeWall(Cell current,Cell next){
@@ -199,13 +211,40 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         currentPosition.x = player.col*cellSize;
         currentPosition.y = player.row*cellSize;
         exit = cells1.get(1);//出口保存在 1 位置
+        monster = new Cell();
+        monster.bottomWall = exit.bottomWall;
+        monster.rightWall = exit.rightWall;
+        monster.col = exit.col;
+        monster.row = exit.row;
+        monster.leftWall = exit.leftWall;
+        monster.topWall = exit.topWall;
+        monster.visited = exit.visited;
+        destRectMonster = new RectF(monster.col*cellSize-10,monster.row*cellSize-20,(monster.col+1)*cellSize+10,(monster.row+1)*cellSize);
+        monsterPosition.x = monster.col*cellSize;
+        monsterPosition.y = monster.row*cellSize;
         cells1.remove(0);
         cells1.remove(0);
         cells = new Cell[COLS][ROWS];
         for (Cell cell:cells1) {
             cells[cell.col][cell.row] = cell;
         }
-        System.out.println(level);
+        exitLeft = exit.col*cellSize;
+        exitTop = exit.row*cellSize;
+        exitRight = (exit.col+1)*cellSize;
+        exitBottom = (exit.row+1)*cellSize;
+        destRectExit = new RectF(exitLeft,exitTop,exitRight,exitBottom);
+        if(mode==1){
+            if(!monster.rightWall){
+                monsterDirection = 1;
+            }else if(!monster.bottomWall){
+                monsterDirection = 2;
+            }else if(!monster.leftWall){
+                monsterDirection = 3;
+            }else if(!monster.topWall){
+                monsterDirection = 0;
+            }
+            initMonster();
+        }
     }
 
     //生成迷宫json文件
@@ -366,18 +405,29 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         }
 
         //画出出口
-        exitLeft = exit.col*cellSize+margin;
-        exitTop = exit.row*cellSize+margin;
-        exitRight = (exit.col+1)*cellSize-margin;
-        exitBottom = (exit.row+1)*cellSize-margin;
-        destRectExit = new RectF(exitLeft,exitTop,exitRight,exitBottom);
+
         canvas.drawBitmap(portalBitmap,null,destRectExit,bitmapPaint);
+
+        //画怪物
+        if(mode==1) {
+            destRectMonster.top = monsterPosition.y;
+            destRectMonster.bottom = monsterPosition.y + cellSize;
+            destRectMonster.left = monsterPosition.x;
+            destRectMonster.right = monsterPosition.x + cellSize;
+            canvas.drawBitmap(monsterBitmap[monsterState], null, destRectMonster, bitmapPaint);
+        }
         //画出人物
         destRect.top = currentPosition.y;
         destRect.bottom = currentPosition.y+cellSize;
         destRect.left = currentPosition.x;
         destRect.right = currentPosition.x+cellSize;
         canvas.drawBitmap(playerBitmap[currentDirection][currentState], null,destRect, bitmapPaint);
+        //若与怪物相遇，则失败
+        if(checkFail()){
+            isFailed = true;
+            failDialog();
+        }
+
         //到达终点则显示弹窗,且完成绘图后，才弹出
         if(checkFinish()){
             //System.out.println("test");
@@ -397,6 +447,37 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     popupWindow = null;
                 }
                 readMaze("maze"+(++level)+".json");
+                invalidate();
+            }
+        });
+        if(popupWindow == null) {
+            popupWindow = new PopupWindow(menuView, 800, 400, true);
+        }
+//        popupWindow.setAnimationStyle(R.style.popwin_anim_style);
+        popupWindow.setFocusable(false);
+        popupWindow.setTouchInterceptor(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return false;
+            }
+        });
+        popupWindow.showAtLocation(menuView, Gravity.CENTER,0,0);//设置popupwindow的窗口位置
+    }
+
+    private void failDialog(){
+        LayoutInflater mLayoutInflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        ViewGroup menuView = (ViewGroup) mLayoutInflater.inflate(R.layout.popup_window, null, true);
+        Button button = (Button) menuView.findViewById(R.id.next_button);
+        button.setBackgroundResource(R.drawable.replay);
+        button.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(popupWindow != null) {
+                    popupWindow.dismiss();//无法点击其他区域
+                    popupWindow = null;
+                }
+                isFailed = false;
+                readMaze("maze"+level+".json");
                 invalidate();
             }
         });
@@ -580,6 +661,14 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         return false;
     }
 
+    //检测玩家与怪物相遇
+    private boolean checkFail(){
+        if(currentPosition.x==monsterPosition.x&&currentPosition.y==monsterPosition.y){
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         detector.onTouchEvent(event);
@@ -636,6 +725,116 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
 
     }
 
+    //初始化怪物线程
+    public void initMonster(){
+        monsterThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int i = 0;
+                while(!isFailed) {
+                    if (monsterDirection == 1) {
+                        while (!isFailed&&monsterDirection == 1 && !monster.rightWall) {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            monsterState = (monsterState + 1) % 4;
+                            monsterPosition.x += 10;
+                            if (i == 9) {
+                                monster = cells[monster.col + 1][monster.row];
+                                if (!monster.bottomWall) {
+                                    monsterDirection = 2;
+                                }
+                            }
+                            i = (i + 1) % 10;
+                            handler.sendEmptyMessage(77);
+                        }
+                        if(monster.bottomWall&&monster.topWall){
+                            monsterDirection = 3;
+                        }
+                        if(monster.bottomWall&&!monster.topWall){
+                            monsterDirection = 0;
+                        }
+                    } else if (monsterDirection == 2) {
+                        while (!isFailed&&monsterDirection == 2 && !monster.bottomWall) {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            monsterState = (monsterState + 1) % 4;
+                            monsterPosition.y += 10;
+                            if (i == 9) {
+                                monster = cells[monster.col][monster.row + 1];
+                                if (!monster.leftWall) {
+                                    monsterDirection = 3;
+                                }
+                            }
+                            i = (i + 1) % 10;
+                            handler.sendEmptyMessage(77);
+                        }
+                        if(monster.leftWall&& monster.rightWall){
+                            monsterDirection = 0;
+                        }
+                        if(monster.leftWall&&!monster.rightWall){
+                            monsterDirection = 1;
+                        }
+                    } else if (monsterDirection == 3) {
+                        while (!isFailed&&monsterDirection == 3 && !monster.leftWall) {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            monsterState = (monsterState + 1) % 4;
+                            monsterPosition.x -= 10;
+                            if (i == 9) {
+                                monster = cells[monster.col - 1][monster.row];
+                                if (!monster.topWall) {
+                                    monsterDirection = 0;
+                                }
+                            }
+                            i = (i + 1) % 10;
+                            handler.sendEmptyMessage(77);
+                        }
+                        if(monster.topWall&& monster.bottomWall){
+                            monsterDirection = 1;
+                        }
+                        if(monster.topWall&&!monster.bottomWall){
+                            monsterDirection = 2;
+                        }
+                    } else if (monsterDirection == 0) {
+                        while (!isFailed&&monsterDirection == 0 && !monster.topWall) {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            monsterState = (monsterState + 1) % 4;
+                            monsterPosition.y -= 10;
+                            if (i == 9) {
+                                monster = cells[monster.col][monster.row - 1];
+                                if (!monster.rightWall) {
+                                    monsterDirection = 1;
+                                }
+                            }
+                            i = (i + 1) % 10;
+                            handler.sendEmptyMessage(77);
+                        }
+                        if(monster.rightWall&&monster.leftWall){
+                            monsterDirection = 2;
+                        }
+                        if(monster.rightWall&&!monster.leftWall){
+                            monsterDirection = 3;
+                        }
+                    }
+                }
+            }
+        });
+        monsterThread.start();
+    }
+
     private class Cell{
         boolean topWall = true;
         boolean leftWall = true;
@@ -648,6 +847,10 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         public Cell(int col,int row){
             this.col = col;
             this.row = row;
+        }
+
+        public Cell() {
+
         }
 
         public int getOutlets(){

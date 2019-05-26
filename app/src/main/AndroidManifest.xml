@@ -9,7 +9,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ClassicModeActivity"></activity>
+        <activity android:name=".MonsterModeActivity"></activity>
+        <activity android:name=".ClassicModeActivity" />
         <activity android:name=".MenuActivity" />
         <activity android:name=".GameActivity" />
         <activity android:name=".RankActivity" />

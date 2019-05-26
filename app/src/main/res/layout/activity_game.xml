@@ -4,14 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".GameActivity"
-    android:background="@drawable/menu">
+    android:background="#D4FCF3"
+    tools:context=".GameActivity">
 
     <com.maze.simplemaze.GameView
         android:id="@+id/game_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="50dp"
-        android:layout_marginBottom="50dp"/>
+        android:layout_marginBottom="50dp" />
 
 </LinearLayout>

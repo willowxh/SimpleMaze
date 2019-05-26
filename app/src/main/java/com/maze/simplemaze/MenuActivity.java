@@ -27,5 +27,13 @@ public class MenuActivity extends AppCompatActivity {
                 startActivity(classic_mode);
             }
         });
+        btn2 = findViewById(R.id.button2);
+        btn2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent monster_mode = new Intent(MenuActivity.this,MonsterModeActivity.class);
+                startActivity(monster_mode);
+            }
+        });
     }
 }
