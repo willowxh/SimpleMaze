@@ -57,7 +57,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     FileHelper fileHelper;
     int level;
     Point currentPosition = new Point();
-    Point monsterPosition = new Point();
+    Point monsterPosition = null;
     int currentDirection = 1;
     int monsterDirection = 1;
     final int ANIM_COUNT=4,ANIM_DOWN=2,ANIM_LEFT=3,ANIM_RIGHT=1,ANIM_UP=0;
@@ -69,7 +69,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     int mode = 0; //关卡模式：0=>经典 1=>怪物 2=>冰块
     Thread monsterThread;
     boolean isFailed = false;
-    //Thread moveThread = null;
+    Thread moveThread = null;
 
     Handler handler = new Handler(){
         @Override
@@ -101,8 +101,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         bitmapPaint.setFilterBitmap(true);
         bitmapPaint.setDither(true);
 
+        int iceColor = getResources().getColor(R.color.ice_color);
         icePaint = new Paint();
-        icePaint.setColor(Color.WHITE);
+        icePaint.setColor(iceColor);
         bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.picature);
         portalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.portal4);
         wallBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.wall);
@@ -117,7 +118,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         fileHelper = new FileHelper(getContext());
         detector = new GestureDetector(getContext(),this);
         destRect = new RectF();
-        //moveThread = new Thread(this);
+        moveThread = new Thread(this);
         clipBitmap();
         monsterBitmap[0] = BitmapFactory.decodeResource(getResources(),R.drawable.manster1);
         monsterBitmap[1] = BitmapFactory.decodeResource(getResources(),R.drawable.manster2);
@@ -211,22 +212,27 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         currentPosition.x = player.col*cellSize;
         currentPosition.y = player.row*cellSize;
         exit = cells1.get(1);//出口保存在 1 位置
-        monster = new Cell();
-        monster.bottomWall = exit.bottomWall;
-        monster.rightWall = exit.rightWall;
-        monster.col = exit.col;
-        monster.row = exit.row;
-        monster.leftWall = exit.leftWall;
-        monster.topWall = exit.topWall;
-        monster.visited = exit.visited;
-        destRectMonster = new RectF(monster.col*cellSize-10,monster.row*cellSize-20,(monster.col+1)*cellSize+10,(monster.row+1)*cellSize);
-        monsterPosition.x = monster.col*cellSize;
-        monsterPosition.y = monster.row*cellSize;
+//        monster = new Cell();
+//        monster.bottomWall = exit.bottomWall;
+//        monster.rightWall = exit.rightWall;
+//        monster.col = exit.col;
+//        monster.row = exit.row;
+//        monster.leftWall = exit.leftWall;
+//        monster.topWall = exit.topWall;
+//        monster.visited = exit.visited;
+//        destRectMonster = new RectF(monster.col*cellSize-10,monster.row*cellSize-20,(monster.col+1)*cellSize+10,(monster.row+1)*cellSize);
+//        monsterPosition.x = monster.col*cellSize;
+//        monsterPosition.y = monster.row*cellSize;
         cells1.remove(0);
         cells1.remove(0);
         cells = new Cell[COLS][ROWS];
         for (Cell cell:cells1) {
             cells[cell.col][cell.row] = cell;
+            if(mode == 2){// 设置冰块
+                if(cell.col == 5 || cell.col == 6 || cell.row==7 || cell.row==8){
+                    cell.isIce = true;
+                }
+            }
         }
         exitLeft = exit.col*cellSize;
         exitTop = exit.row*cellSize;
@@ -234,6 +240,20 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         exitBottom = (exit.row+1)*cellSize;
         destRectExit = new RectF(exitLeft,exitTop,exitRight,exitBottom);
         if(mode==1){
+
+            monsterPosition = new Point();
+            monster = new Cell();
+            monster.bottomWall = exit.bottomWall;
+            monster.rightWall = exit.rightWall;
+            monster.col = exit.col;
+            monster.row = exit.row;
+            monster.leftWall = exit.leftWall;
+            monster.topWall = exit.topWall;
+            monster.visited = exit.visited;
+            destRectMonster = new RectF(monster.col*cellSize-10,monster.row*cellSize-20,(monster.col+1)*cellSize+10,(monster.row+1)*cellSize);
+            monsterPosition.x = monster.col*cellSize;
+            monsterPosition.y = monster.row*cellSize;
+
             if(!monster.rightWall){
                 monsterDirection = 1;
             }else if(!monster.bottomWall){
@@ -320,8 +340,23 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         canvas.translate(hMargin,vMargin);
         float margin = cellSize /10;
 
-        //画出墙体
+
         float factor = 0.11f;
+
+        //画冰块
+        for (int x=0;x<COLS;x++){
+            for (int y=0;y<ROWS;y++){
+
+                if(cells[x][y].isIce){
+                    canvas.drawRect(cells[x][y].col*cellSize,
+                            cells[x][y].row*cellSize,
+                            (cells[x][y].col+1)*cellSize,
+                            (cells[x][y].row+1)*cellSize,
+                            icePaint);
+                }
+            }
+        }
+        //画出墙体
         for (int x=0;x<COLS;x++){
             for (int y=0;y<ROWS;y++){
                 if(cells[x][y].topWall) {
@@ -394,13 +429,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
 
                 }
                 //Log.d("iceState",cells[x][y].isIce+"");
-                if(cells[x][y].isIce){
-                    canvas.drawRect(cells[x][y].col*cellSize+margin,
-                            cells[x][y].row*cellSize+margin,
-                            (cells[x][y].col+1)*cellSize-margin,
-                            (cells[x][y].row+1)*cellSize-margin,
-                            icePaint);
-                }
+
             }
         }
 
@@ -516,6 +545,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
 
     //自动行走线程
     public void run(){
+        //     0
+        //  3     1
+        //     2
         int i = 0;
         if(currentDirection == 1) {
             while (!player.rightWall) {
@@ -526,7 +558,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(checkFinish()){
                         break;
                     }
-                    if(player.getOutlets()>2) break;
+                    if(!player.isIce) {
+                        if (player.getOutlets() > 2) break;
+                    }
                 }
                 i = (i + 1) % 10;
 //                invalidate();
@@ -547,7 +581,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(checkFinish()){
                         break;
                     }
-                    if(player.getOutlets()>2) break;
+                    if(!player.isIce) {
+                        if (player.getOutlets() > 2) break;
+                    }
                 }
                 i = (i + 1) % 10;
 //                invalidate();
@@ -568,7 +604,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(checkFinish()){
                         break;
                     }
-                    if(player.getOutlets()>2) break;
+                    if(!player.isIce) {
+                        if (player.getOutlets() > 2) break;
+                    }
                 }
                 i = (i + 1) % 10;
 //                invalidate();
@@ -589,7 +627,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(checkFinish()){
                         break;
                     }
-                    if(player.getOutlets()>2) break;
+                    if(!player.isIce) {
+                        if (player.getOutlets() > 2) break;
+                    }
                 }
                 i = (i + 1) % 10;
 //                invalidate();
@@ -608,47 +648,51 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     private void movePlayer(Direction direction){
         switch (direction){
             case UP:
-                if(!player.topWall){
+                if(!player.topWall && !moveThread.isAlive()){
                     currentDirection = 0;
 //                    invalidate();
-                    handler.sendEmptyMessage(77);
-                    Thread thread = new Thread(this);
-                    thread.start();
 //                    handler.sendEmptyMessage(77);
-//                    moveThread.start();
+//                    Thread thread = new Thread(this);
+//                    thread.start();
+                    handler.sendEmptyMessage(77);
+                    moveThread = new Thread(this);
+                    moveThread.start();
                 }
                 break;
             case DOWN:
-                if(!player.bottomWall){
+                if(!player.bottomWall && !moveThread.isAlive()){
                     currentDirection = 2;
 //                    invalidate();
-                    handler.sendEmptyMessage(77);
-                    Thread thread = new Thread(this);
-                    thread.start();
 //                    handler.sendEmptyMessage(77);
-//                    moveThread.start();
+//                    Thread thread = new Thread(this);
+//                    thread.start();
+                    handler.sendEmptyMessage(77);
+                    moveThread = new Thread(this);
+                    moveThread.start();
                 }
                 break;
             case LEFT:
-                if(!player.leftWall){
+                if(!player.leftWall && !moveThread.isAlive()){
                     currentDirection = 3;
 //                    invalidate();
-                    handler.sendEmptyMessage(77);
-                    Thread thread = new Thread(this);
-                    thread.start();
 //                    handler.sendEmptyMessage(77);
-//                    moveThread.start();
+//                    Thread thread = new Thread(this);
+//                    thread.start();
+                    handler.sendEmptyMessage(77);
+                    moveThread = new Thread(this);
+                    moveThread.start();
                 }
                 break;
             case RIGHT:
-                if(!player.rightWall){
+                if(!player.rightWall && !moveThread.isAlive()){
                     currentDirection = 1;
 //                    invalidate();
-                    handler.sendEmptyMessage(77);
-                    Thread thread = new Thread(this);
-                    thread.start();
 //                    handler.sendEmptyMessage(77);
-//                    moveThread.start();
+//                    Thread thread = new Thread(this);
+//                    thread.start();
+                    handler.sendEmptyMessage(77);
+                    moveThread = new Thread(this);
+                    moveThread.start();
                 }
                 break;
         }
@@ -663,8 +707,10 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
 
     //检测玩家与怪物相遇
     private boolean checkFail(){
-        if(currentPosition.x==monsterPosition.x&&currentPosition.y==monsterPosition.y){
-            return true;
+        if(monsterPosition != null) {
+            if (currentPosition.x == monsterPosition.x && currentPosition.y == monsterPosition.y) {
+                return true;
+            }
         }
         return false;
     }
@@ -866,4 +912,6 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
             return outLets;
         }
     }
+
+
 }

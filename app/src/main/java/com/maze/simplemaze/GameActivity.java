@@ -5,8 +5,10 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 
 public class GameActivity extends AppCompatActivity {
+    GameView gameView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,9 +20,27 @@ public class GameActivity extends AppCompatActivity {
         Intent intent = getIntent();
         int level = intent.getIntExtra("level",1);
         int mode = intent.getIntExtra("mode",0);
-        GameView gameView = findViewById(R.id.game_view);
+        gameView = findViewById(R.id.game_view);
+        LinearLayout linearLayout = findViewById(R.id.main_bg);
+        if(mode == 2){
+            linearLayout.setBackgroundResource(R.drawable.menu);
+        }
         gameView.mode = mode;
         gameView.level = level;
         gameView.readMaze("maze"+level+".json");
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(gameView.moveThread != null){
+            gameView.moveThread = null;
+        }
+        if(gameView.monsterThread != null){
+            gameView.monsterThread = null;
+        }
+        if(gameView.handler != null){
+            gameView.handler.removeCallbacksAndMessages(null);
+        }
+        super.onDestroy();
     }
 }

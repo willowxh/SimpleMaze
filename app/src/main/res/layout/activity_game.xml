@@ -2,10 +2,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_bg"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#D4FCF3"
     tools:context=".GameActivity">
+    <!--#D4FCF3-->
 
     <com.maze.simplemaze.GameView
         android:id="@+id/game_view"
