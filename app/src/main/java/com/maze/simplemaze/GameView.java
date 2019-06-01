@@ -271,14 +271,14 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         Cell current,next;
 
         cells = new Cell[COLS][ROWS];
-        for (int x=0;x<COLS;x++){
-            for (int y=0;y<ROWS;y++){
-                cells[x][y] = new Cell(x,y);
-                if(COLS==6){
-                    cells[x][y].isIce = true;
-                }
-            }
-        }
+//        for (int x=0;x<COLS;x++){
+//            for (int y=0;y<ROWS;y++){
+//                cells[x][y] = new Cell(x,y);
+//                if(COLS==6){
+//                    cells[x][y].isIce = true;
+//                }
+//            }
+//        }
         int col1 = random.nextInt(COLS);
         int row1 = random.nextInt(ROWS);
         int col2 = random.nextInt(COLS);
@@ -354,32 +354,34 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     if(RWSignal) {
                         if (x == 4 || x == 5 || y == 6 || y == 7) {
                             int wallNum = random.nextInt(4);
-                            switch (wallNum) {
-                                case 0:
-                                    cells[x][y].topWall = false;
-                                    if (y - 1 >= 0) {
-                                        cells[x][y - 1].bottomWall = false;
-                                    }
-                                    break;
-                                case 1:
-                                    cells[x][y].leftWall = false;
-                                    if (x - 1 >= 0) {
-                                        cells[x - 1][y].rightWall = false;
-                                    }
-                                    break;
-                                case 2:
-                                    cells[x][y].bottomWall = false;
-                                    if (y + 1 <= 13) {
-                                        cells[x][y + 1].topWall = false;
-                                    }
-                                    break;
-                                case 3:
-                                    cells[x][y].rightWall = false;
-                                    if (x + 1 <= 9)
-                                        cells[x + 1][y].leftWall = false;
-                                    break;
-                                default:
-                                    break;
+                            if(x !=0 && y!=0 && x!=9 && y!=13) {
+                                switch (wallNum) {
+                                    case 0:
+                                        cells[x][y].topWall = false;
+                                        if (y - 1 > 0) {
+                                            cells[x][y - 1].bottomWall = false;
+                                        }
+                                        break;
+                                    case 1:
+                                        cells[x][y].leftWall = false;
+                                        if (x - 1 > 0) {
+                                            cells[x - 1][y].rightWall = false;
+                                        }
+                                        break;
+                                    case 2:
+                                        cells[x][y].bottomWall = false;
+                                        if (y + 1 < 13) {
+                                            cells[x][y + 1].topWall = false;
+                                        }
+                                        break;
+                                    case 3:
+                                        cells[x][y].rightWall = false;
+                                        if (x + 1 < 9)
+                                            cells[x + 1][y].leftWall = false;
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                         }
                     }
@@ -502,6 +504,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                     popupWindow = null;
                 }
                 readMaze("maze"+(++level)+".json");
+                numOfMove = 0;
                 invalidate();
             }
         });
