@@ -10,17 +10,18 @@
     tools:context=".GameActivity">
     <!--#D4FCF3-->
     <ImageView
+        android:id="@+id/replay_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_gravity="right"
         android:layout_marginRight="20dp"
-        android:src="@drawable/replay"/>
+        android:src="@drawable/black_replay"/>
 
     <com.maze.simplemaze.GameView
         android:id="@+id/game_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="30dp"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="30dp"/>
 
 </LinearLayout>
