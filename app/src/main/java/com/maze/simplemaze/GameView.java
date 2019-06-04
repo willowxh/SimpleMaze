@@ -65,12 +65,12 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     final Bitmap[] monsterBitmap = new Bitmap[4];
     int monsterState = 2;//怪物状态
     int currentState = 0;//当前行走状态
-    long speed = 10;  //行走速度
+    long speed = 40;  //行走速度
     int mode = 0; //关卡模式：0=>经典 1=>怪物 2=>冰块
     Thread monsterThread;
     boolean isFailed = false;
     Thread moveThread = null;
-    private int numOfMove = 0;
+    int numOfMove = 0;
     private boolean RWSignal = false;
 
     Handler handler = new Handler(){
@@ -350,37 +350,39 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         //画出墙体
         for (int x=0;x<COLS;x++){
             for (int y=0;y<ROWS;y++){
-                if(numOfMove > 5) {
-                    if(RWSignal) {
-                        if (x == 4 || x == 5 || y == 6 || y == 7) {
-                            int wallNum = random.nextInt(4);
-                            if(x !=0 && y!=0 && x!=9 && y!=13) {
-                                switch (wallNum) {
-                                    case 0:
-                                        cells[x][y].topWall = false;
-                                        if (y - 1 > 0) {
-                                            cells[x][y - 1].bottomWall = false;
-                                        }
-                                        break;
-                                    case 1:
-                                        cells[x][y].leftWall = false;
-                                        if (x - 1 > 0) {
-                                            cells[x - 1][y].rightWall = false;
-                                        }
-                                        break;
-                                    case 2:
-                                        cells[x][y].bottomWall = false;
-                                        if (y + 1 < 13) {
-                                            cells[x][y + 1].topWall = false;
-                                        }
-                                        break;
-                                    case 3:
-                                        cells[x][y].rightWall = false;
-                                        if (x + 1 < 9)
-                                            cells[x + 1][y].leftWall = false;
-                                        break;
-                                    default:
-                                        break;
+                if(mode == 2) {
+                    if (numOfMove > 5) {
+                        if (RWSignal) {
+                            if (x == 4 || x == 5 || y == 6 || y == 7) {
+                                int wallNum = random.nextInt(4);
+                                if (x != 0 && y != 0 && x != 9 && y != 13) {
+                                    switch (wallNum) {
+                                        case 0:
+                                            cells[x][y].topWall = false;
+                                            if (y - 1 > 0) {
+                                                cells[x][y - 1].bottomWall = false;
+                                            }
+                                            break;
+                                        case 1:
+                                            cells[x][y].leftWall = false;
+                                            if (x - 1 > 0) {
+                                                cells[x - 1][y].rightWall = false;
+                                            }
+                                            break;
+                                        case 2:
+                                            cells[x][y].bottomWall = false;
+                                            if (y + 1 < 13) {
+                                                cells[x][y + 1].topWall = false;
+                                            }
+                                            break;
+                                        case 3:
+                                            cells[x][y].rightWall = false;
+                                            if (x + 1 < 9)
+                                                cells[x + 1][y].leftWall = false;
+                                            break;
+                                        default:
+                                            break;
+                                    }
                                 }
                             }
                         }
