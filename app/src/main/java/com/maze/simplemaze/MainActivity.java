@@ -5,13 +5,13 @@ import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.media.MediaPlayer;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.Toast;
+
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
@@ -20,7 +20,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ImageView rank;
     ImageView sound;
     ImageView play;
-    MediaPlayer mp = null;
+    static MediaPlayer mp = null;
     Boolean isPlayMusic = true;
 
     @Override
@@ -54,7 +54,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent_menu);
                 break;
             case R.id.setting:
-                Toast.makeText(this, "tap setting", Toast.LENGTH_SHORT).show();
+                Intent intent_setting = new Intent(MainActivity.this,SettingActivity.class);
+                startActivity(intent_setting);
                 break;
             case R.id.rank:
                 Intent intent_rank = new Intent(MainActivity.this,RankActivity.class);
@@ -90,7 +91,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mp.setDataSource(afd);
             mp.prepare();
             mp.setLooping(true);
-            mp.start();
+            if(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("bg",true)){
+                mp.start();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -23,7 +23,7 @@ public class GameActivity extends AppCompatActivity {
         gameView = findViewById(R.id.game_view);
         LinearLayout linearLayout = findViewById(R.id.main_bg);
         if(mode == 2){
-            linearLayout.setBackgroundResource(R.drawable.menu);
+            //linearLayout.setBackgroundResource(R.drawable.menu);
         }
         gameView.mode = mode;
         gameView.level = level;

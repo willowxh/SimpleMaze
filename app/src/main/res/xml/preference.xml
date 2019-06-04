@@ -1,0 +1,33 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:key="preference_screen_settings"
+    android:title="settings">
+
+    <Preference
+        android:key="show"
+        android:title="当前昵称："/>
+
+    <Preference android:layout="@layout/divider"/>
+
+        <EditTextPreference android:key="name"
+            android:title="更换昵称"
+            android:summary="点击以更换"
+            android:dialogTitle="输入你的昵称:" />
+
+    <Preference android:layout="@layout/divider"/>
+
+    <SwitchPreference
+        android:key="bg"
+        android:summaryOff="关闭"
+        android:summaryOn="打开"
+        android:title="背景音乐" />
+
+    <Preference android:layout="@layout/divider"/>
+
+    <Preference
+        android:key="about"
+        android:title="关于"
+        android:summary="版本号：3.14.10"/>
+    <Preference android:layout="@layout/divider"/>
+
+
+</PreferenceScreen>
