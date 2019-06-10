@@ -65,7 +65,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     final Bitmap[] monsterBitmap = new Bitmap[4];
     int monsterState = 2;//怪物状态
     int currentState = 0;//当前行走状态
-    long speed = 40;  //行走速度
+    long speed = 70;  //行走速度
     int mode = 0; //关卡模式：0=>经典 1=>怪物 2=>冰块
     Thread monsterThread;
     boolean isFailed = false;

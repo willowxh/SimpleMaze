@@ -4,9 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#D4FCF3"
+    android:background="@drawable/menu"
     tools:context=".SettingActivity">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="设置"
+        android:gravity="center"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:textStyle="bold" />
     <fragment
         android:layout_width="match_parent"
         android:layout_height="match_parent"
