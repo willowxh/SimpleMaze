@@ -9,27 +9,31 @@
         android:layout_height="50dp"
         android:gravity="center"
         android:text="名次"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:textColor="#fff"/>
     <TextView
         android:id="@+id/uname"
         android:layout_width="0px"
         android:layout_height="50dp"
         android:gravity="center"
-        android:text="绰号"
-        android:layout_weight="1"/>
+        android:text="昵称"
+        android:layout_weight="1"
+        android:textColor="#fff"/>
     <TextView
         android:id="@+id/ustars"
         android:layout_width="0px"
         android:layout_height="50dp"
         android:gravity="center"
         android:text="星数"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:textColor="#fff"/>
     <TextView
         android:id="@+id/udate"
         android:layout_width="0px"
         android:layout_height="50dp"
         android:gravity="center"
         android:text="上榜时间"
-        android:layout_weight="2"/>
+        android:layout_weight="2"
+        android:textColor="#fff"/>
 
 </LinearLayout>

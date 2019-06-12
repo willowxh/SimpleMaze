@@ -5,19 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".RankActivity"
-    android:background="@drawable/bg_rank"
+    android:background="@drawable/menu"
     android:orientation="vertical">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:fontFamily="cursive"
         android:gravity="center"
         android:text="Ranking"
-        android:textColor="#3F51B5"
-        android:textSize="40sp"
-        android:textStyle="bold" />
+        android:textColor="#fff"
+        android:textSize="40sp" />
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

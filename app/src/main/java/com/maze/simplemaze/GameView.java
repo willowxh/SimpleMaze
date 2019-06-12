@@ -71,6 +71,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
     boolean isFailed = false;
     Thread moveThread = null;
     int numOfMove = 0;
+    int speedNum = 0;
     private boolean RWSignal = false;
 
     Handler handler = new Handler(){
@@ -351,7 +352,7 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
         for (int x=0;x<COLS;x++){
             for (int y=0;y<ROWS;y++){
                 if(mode == 2) {
-                    if (numOfMove > 5) {
+                    if (numOfMove % 10 == 0) {
                         if (RWSignal) {
                             if (x == 4 || x == 5 || y == 6 || y == 7) {
                                 int wallNum = random.nextInt(4);
@@ -359,25 +360,25 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                                     switch (wallNum) {
                                         case 0:
                                             cells[x][y].topWall = false;
-                                            if (y - 1 > 0) {
+                                            if (y - 1 >= 0) {
                                                 cells[x][y - 1].bottomWall = false;
                                             }
                                             break;
                                         case 1:
                                             cells[x][y].leftWall = false;
-                                            if (x - 1 > 0) {
+                                            if (x - 1 >= 0) {
                                                 cells[x - 1][y].rightWall = false;
                                             }
                                             break;
                                         case 2:
                                             cells[x][y].bottomWall = false;
-                                            if (y + 1 < 13) {
+                                            if (y + 1 <= 13) {
                                                 cells[x][y + 1].topWall = false;
                                             }
                                             break;
                                         case 3:
                                             cells[x][y].rightWall = false;
-                                            if (x + 1 < 9)
+                                            if (x + 1 <= 9)
                                                 cells[x + 1][y].leftWall = false;
                                             break;
                                         default:
@@ -460,8 +461,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener,
                 //Log.d("iceState",cells[x][y].isIce+"");
 
             }
-            RWSignal = false;
+//            RWSignal = false;
         }
+        RWSignal = false;
 
         //画出出口
 

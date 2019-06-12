@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 public class GameActivity extends AppCompatActivity {
     GameView gameView;
     ImageView imageView;
+    ImageView speedup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +26,7 @@ public class GameActivity extends AppCompatActivity {
         int mode = intent.getIntExtra("mode",0);
         gameView = findViewById(R.id.game_view);
         imageView = findViewById(R.id.replay_button);
+        speedup = findViewById(R.id.speedup_button);
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -33,10 +35,27 @@ public class GameActivity extends AppCompatActivity {
                 gameView.handler.sendEmptyMessage(77);
             }
         });
+        speedup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gameView.speedNum += 1;
+                switch (gameView.speedNum % 3){
+                    case 0:
+                        gameView.speed = 70;
+                        break;
+                    case 1:
+                        gameView.speed = 50;
+                        break;
+                    case 2:
+                        gameView.speed = 20;
+                }
+            }
+        });
         LinearLayout linearLayout = findViewById(R.id.main_bg);
-        if(mode == 2){
-            //linearLayout.setBackgroundResource(R.drawable.menu);
-            imageView.setImageResource(R.drawable.replay);
+        if(mode == 0 || mode == 2){
+            linearLayout.setBackgroundResource(R.drawable.menu);
+            imageView.setImageResource(R.drawable.yellow_replay);
+            speedup.setImageResource(R.drawable.right_arrow);
 
         }
         gameView.mode = mode;
